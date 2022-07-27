@@ -1,0 +1,86 @@
+/*
+Please Switch to Correct Role before executing script
+*/
+
+use role sysadmin;
+
+/*
+Create Warehouse
+*/
+
+CREATE WAREHOUSE TRAINING_WH WITH WAREHOUSE_SIZE = 'SMALL' WAREHOUSE_TYPE = 'STANDARD' AUTO_SUSPEND = 60 
+AUTO_RESUME = TRUE MIN_CLUSTER_COUNT = 1 MAX_CLUSTER_COUNT = 10 SCALING_POLICY = 'STANDARD' INITIALLY_SUSPENDED = TRUE;
+
+
+/*
+Create Role
+*/
+use role useradmin;
+create role developer comment = 'This role is for all training users';
+grant role developer to role sysadmin;
+
+/*
+Grant Warehouse Access to Role Developer
+*/
+
+use role sysadmin;
+grant usage on warehouse TRAINING_WH to role Developer;
+
+/* create databases */
+
+create database Divyani_Rajani_db ;
+create database Debadatta_Mohanty_db ;
+
+/* Grant database usage to role */
+
+grant usage on database Divyani_Rajani_db to role developer;
+grant usage on database Debadatta_Mohanty_db to role developer;
+
+
+/* Grant schema creation rights to Role */
+
+grant create schema on database Divyani_Rajani_db to role developer;
+grant create schema on database Debadatta_Mohanty_db to role developer;
+
+use role useradmin;
+
+/*
+CREATE USER SF_HCL_USER_01 PASSWORD = 'Hack@0302' LOGIN_NAME = 'sanyasiraju.d' DISPLAY_NAME = 'Raju Sanyasi Dandu'  
+DEFAULT_ROLE = public DEFAULT_WAREHOUSE =  TRAINING_WH MUST_CHANGE_PASSWORD =TRUE;
+*/
+
+CREATE USER SF_HCL_USER_01 PASSWORD ='Abcd1234@' LOGIN_NAME = 'Divyani.Rajani' DISPLAY_NAME = 'Divyani Rajani'  DEFAULT_ROLE = public DEFAULT_WAREHOUSE =  TRAINING_WH MUST_CHANGE_PASSWORD =TRUE;
+CREATE USER SF_HCL_USER_02 PASSWORD ='Abcd1234@' LOGIN_NAME = 'Debadatta.Mohanty' DISPLAY_NAME = 'Debadatta Mohanty'  DEFAULT_ROLE = public DEFAULT_WAREHOUSE =  TRAINING_WH MUST_CHANGE_PASSWORD =TRUE;
+
+GRANT ROLE developer TO USER SF_HCL_USER_01 ;
+GRANT ROLE developer TO USER SF_HCL_USER_02 ;
+
+/* Global & Account Level Previliages 
+
+use role accountadmin;
+grant imported privileges on database snowflake to role developer;
+grant monitor usage on account to role developer;
+
+*/
+
+use role accountadmin;
+grant imported privileges on database snowflake to role developer;
+grant monitor usage on account to role developer;
+
+
+CREATE OR REPLACE RESOURCE MONITOR "TRAINING_WH_MONITOR" WITH CREDIT_QUOTA = 50, frequency = 'MONTHLY', start_timestamp = 'IMMEDIATELY', end_timestamp = null 
+ TRIGGERS 
+ ON 90 PERCENT DO SUSPEND 
+ ON 98 PERCENT DO SUSPEND_IMMEDIATE 
+ ON 70 PERCENT DO NOTIFY 
+ ON 60 PERCENT DO NOTIFY 
+ ON 50 PERCENT DO NOTIFY 
+ ON 40 PERCENT DO NOTIFY 
+ ON 30 PERCENT DO NOTIFY;
+ALTER WAREHOUSE "TRAINING_WH" SET RESOURCE_MONITOR = "TRAINING_WH_MONITOR";
+
+use role accountadmin;
+
+Grant role ACCOUNTADMIN to user SF_HCL_USER_02;
+
+
